@@ -2,24 +2,33 @@
 
 namespace TallSaas\Plaid;
 
+use TallSaas\Plaid\Exceptions\PlaidException;
 use Illuminate\Support\Facades\Http;
 
 class Plaid {
   
   private $sandbox;
   private $access_token;
-  private $redirect_uri;
 
-  public function __construct(string $access_token = null, array $options = [])
+  private $supported_endpoints = [
+    'link.token.create' => 'link/token/create',
+  ];
+
+  public function __construct(string $access_token = null, bool $sandbox = false)
   {
     $this->access_token = $access_token;
-    $this->sandbox = $options['sandbox'] ?? false;
-    $this->redirect_uri = $options['redirect_uri'] ?? route('');
+    $this->sandbox = $sandbox;
   }
 
   private function api(string $endpoint, string $method = 'GET', array $args = [])
   {
-    $api_host = $this->sandbox ? 'https://sandbox.plaid.com' : 'https://api.plaid.com';
+    $endpoint_key = $endpoint;
+    if (!($endpoint = $this->supported_endpoints[$endpoint_key] ?? false)) :
+      throw new PlaidException("Unsupported API endpoint key \"{$endpoint_key}\"");
+    endif;
+    
+    $api_host = $this->sandbox ? 'sandbox' : (\App::environment('production') ? 'production' : 'development');
+    $api_host = "https://{$api_host}.plaid.com";
     
     $request = Http::withHeaders(['Content-Type' => 'application/json']);
 
@@ -39,53 +48,27 @@ class Plaid {
   }
 
   // https://plaid.com/docs/api/tokens/#linktokencreate
-  public function tokensCreate()
+  public function linkTokenCreate(string $webhook_url = null, string $redirect_url = null)
   {
-    /*
-    curl -X POST https://sandbox.plaid.com/link/token/create \
-    -H 'Content-Type: application/json' \
-    -d '{
-      "client_id": "CLIENT_ID",
-      "secret": "SECRET",
-      "client_name": "Plaid Test App",
-      "user": { "client_user_id": "user-id" },
-      "products": ["auth"],
-      "country_codes": ["US"],
-      "language": "en",
-      "webhook": "https://webhook.example.com",
-      "redirect_uri": "https://domainname.com/oauth-page.html",
-    }'
-    */
-  }
+    $webhook_url  = $webhook_url  ?? route('tallsaas.budget.dashboard'); //route('tallsaas.plaid::webook');
+    $redirect_url = $redirect_url ?? route('tallsaas.budget.dashboard'); //route('tallsaas.plaid::authenticate');
 
-  // https://plaid.com/docs/api/institutions/#institutionsget_by_id
-  public function institution(string $institution_id)
-  {
-    /*
-    curl -X POST https://sandbox.plaid.com/institutions/get_by_id \
-    -H 'Content-Type: application/json' \
-    -d '{
-      "institution_id": "ins_109512",
-      "client_id": String,
-      "secret": String,
-      "country_codes": Array
-    }'
-    */
-  }
+    $response = $this->api(
+      endpoint: 'link.token.create',
+      method: 'POST',
+      args: [
+        'client_id'     => env('PLAID_CLIENT_ID'),
+        'secret'        => env('PLAID_SECRET_KEY'),
+        'client_name'   => env('APP_NAME'),
+        'products'      => ['auth'],
+        'country_codes' => ['CA', 'US'],
+        'language'      => 'en',
+        'webhook'       => $webhook_url,
+        'redirect_uri'  => $redirect_url,
+        'user'          => ['client_user_id' => 'user-id'],
+      ]
+    );
 
-  // https://plaid.com/docs/api/institutions/#institutionssearch
-  public function institutionsSearch(string $search)
-  {
-    /*
-    curl -X POST https://sandbox.plaid.com/institutions/search \
-    -H 'Content-Type: application/json' \
-    -d '{
-      "query": "Gingham",
-      "products": ["transactions"],
-      "client_id": String,
-      "secret": String,
-      "country_codes": ["US"]
-    }' 
-    */
+    return $response['link_token'];
   }
 }
