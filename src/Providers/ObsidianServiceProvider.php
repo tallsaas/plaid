@@ -1,10 +1,10 @@
 <?php
 
-namespace TallSaas\Plaid\Providers;
+namespace Obsidian\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
-class PlaidServiceProvider extends ServiceProvider 
+class ObsidianServiceProvider extends ServiceProvider 
 {
   public function boot()
   {

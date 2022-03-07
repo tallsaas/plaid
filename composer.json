@@ -1,8 +1,8 @@
 {
-    "name": "tallsaas/plaid",
-    "description": "Plaid integration support for TALLSaaS tools.",
+    "name": "tallsaas/obsidian",
+    "description": "Obsidian templating language support for TALLSaaS tools.",
     "keywords": [
-        "plaid",
+        "obsidian",
         "saas",
         "tailwind",
         "alpinejs",
@@ -25,12 +25,12 @@
     },
     "autoload": {
         "psr-4": {
-            "TallSaas\\Plaid\\": "src"
+            "Obsidian\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "TallSaas\\Plaid\\Tests\\": "tests"
+            "Obsidian\\Tests\\": "tests"
         }
     },
     "config": {
@@ -39,7 +39,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "TallSaas\\Plaid\\Providers\\PlaidServiceProvider"
+                "Obsidian\\Providers\\ObsidianServiceProvider"
             ]
         }
     }
