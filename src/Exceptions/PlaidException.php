@@ -2,7 +2,7 @@
 
 namespace TallSaas\Plaid\Exceptions;
 
-use \Exception;
+use Exception;
 
 class PlaidException extends Exception {
   //
